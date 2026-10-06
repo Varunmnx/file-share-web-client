@@ -11,7 +11,7 @@ export interface AuthTokens {
 export interface User {
   id: string;
   email: string;
-  plan: "free" | "pro";
+  plan: "free" | "pro" | "admin";
   created_at: number;
 }
 
@@ -21,11 +21,15 @@ export interface User {
 
 export interface Usage {
   user_id: string;
-  active_transfer_count: number;
-  active_storage_bytes: number;
-  max_transfers: number;
-  max_storage_bytes: number;
-  updated_at: number;
+  plan: "free" | "pro" | "admin";
+  uploads_in_window: number;
+  upload_limit: number | null;           // null = Pro unlimited
+  window_secs: number;
+  active_links: number;                  // currently live (not consumed/expired)
+  max_simultaneous_links: number;        // 1 for free, 3 for pro/admin
+  simultaneous_allowed: boolean;         // false for free, true for pro/admin
+  max_file_bytes: number;                // 20MB free, 200MB pro
+  uploads_remaining: number | null;      // null for pro
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -8,12 +8,13 @@ import Alert from "../components/Alert";
 import Spinner from "../components/Spinner";
 import Navbar from "../components/Navbar";
 
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 B";
+function formatBytes(bytes?: number | null): string {
+  if (!bytes || bytes <= 0 || isNaN(bytes)) return "0 B";
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+  const idx = Math.min(Math.max(i, 0), sizes.length - 1);
+  return `${parseFloat((bytes / Math.pow(k, idx)).toFixed(1))} ${sizes[idx]}`;
 }
 
 function formatDate(ts: number): string {
@@ -31,7 +32,19 @@ function getFileIcon(mime: string): string {
   return "üìÅ";
 }
 
-function UploadPanel({ onUploaded }: { onUploaded: () => void }) {
+function UploadPanel({
+  onUploaded,
+  maxFileSizeBytes,
+  canUpload,
+  canUploadReason,
+  isProOrAdmin,
+}: {
+  onUploaded: () => void;
+  maxFileSizeBytes: number;
+  canUpload: boolean;
+  canUploadReason?: string;
+  isProOrAdmin: boolean;
+}) {
   const fileInputRef             = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver]  = useState(false);
   const [progress, setProgress]  = useState<number | null>(null);
@@ -41,6 +54,10 @@ function UploadPanel({ onUploaded }: { onUploaded: () => void }) {
   const [password, setPassword]  = useState("");
 
   const handleFile = async (file: File) => {
+    if (file.size > maxFileSizeBytes) {
+      setError(`File too large. Your plan allows up to ${formatBytes(maxFileSizeBytes)} per file.`);
+      return;
+    }
     setError("");
     setLastUploaded(null);
     setProgress(0);
@@ -90,17 +107,25 @@ function UploadPanel({ onUploaded }: { onUploaded: () => void }) {
     <div className="card" style={{ marginBottom: 32 }}>
       <h3 style={{ marginBottom: 20 }}>üì§ Upload & Share a File</h3>
 
+      {/* Show blocked banner if simultaneous link limit reached */}
+      {!canUpload && canUploadReason && (
+        <div style={{ marginBottom: 16 }}>
+          <Alert type="error">{canUploadReason}</Alert>
+        </div>
+      )}
+
       <div
-        className={`upload-zone ${dragOver ? "drag-over" : ""}`}
-        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+        className={`upload-zone ${dragOver ? "drag-over" : ""} ${!canUpload ? "upload-zone-disabled" : ""}`}
+        onDragOver={e => { if (!canUpload) return; e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
-        onDrop={onDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onDrop={canUpload ? onDrop : undefined}
+        onClick={() => canUpload && fileInputRef.current?.click()}
+        style={{ cursor: canUpload ? "pointer" : "not-allowed", opacity: canUpload ? 1 : 0.5 }}
       >
-        <input ref={fileInputRef} type="file" onChange={onInputChange} style={{ display: "none" }} />
-        <div className="upload-zone-icon">üìÅ</div>
+        <input ref={fileInputRef} type="file" onChange={onInputChange} style={{ display: "none" }} disabled={!canUpload} />
+        <div className="upload-zone-icon">??</div>
         <h3>Drop your file here</h3>
-        <p>or click to browse ‚Äî any file type supported</p>
+        <p>or click to browse ó max <strong>{formatBytes(maxFileSizeBytes)}</strong> per file</p>
       </div>
 
       <div style={{ marginTop: 16 }}>
@@ -352,8 +377,24 @@ export default function DashboardPage() {
 
   const onDelete = (id: string) => setTransfers(prev => prev.filter(t => t.id !== id));
 
-  const storagePercent = usage
-    ? Math.round((usage.active_storage_bytes / usage.max_storage_bytes) * 100)
+  const isPro    = user?.plan === "pro";
+  const isAdmin  = (user?.plan as string) === "admin";
+  const isProOrAdmin = isPro || isAdmin;
+
+  // File size limit from API (falls back to plan defaults)
+  const maxFileSizeBytes = usage?.max_file_bytes ?? (isProOrAdmin ? 200 * 1024 * 1024 : 20 * 1024 * 1024);
+
+  // Active / simultaneous links
+  const activeLinks = usage?.active_links ?? 0;
+  const maxSimultaneous = usage?.max_simultaneous_links ?? (isProOrAdmin ? 3 : 1);
+
+  // Upload quota
+  const uploadsUsed = usage?.uploads_in_window ?? 0;
+  const uploadsLimit = usage?.upload_limit ?? null;
+  const uploadsRemaining = usage?.uploads_remaining ?? null;
+
+  const storagePercent = maxSimultaneous > 0
+    ? Math.min(100, Math.round((activeLinks / maxSimultaneous) * 100))
     : 0;
 
   return (
@@ -410,31 +451,67 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Stats */}
-        {usage && (
-          <div className="stats-grid">
-            <div className="stat-card">
-              <span className="stat-label">Transfers</span>
-              <span className="stat-value">{usage.active_transfer_count}</span>
-              <span className="stat-sub">of {usage.max_transfers} max</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Storage Used</span>
-              <span className="stat-value">{formatBytes(usage.active_storage_bytes)}</span>
-              <span className="stat-sub">of {formatBytes(usage.max_storage_bytes)}</span>
-            </div>
-            <div className="stat-card" style={{ gridColumn: "1 / -1" }}>
-              <span className="stat-label">Storage Usage</span>
-              <div className="progress-bar-track" style={{ marginTop: 8 }}>
-                <div className="progress-bar-fill" style={{ width: `${storagePercent}%` }} />
-              </div>
-              <span className="stat-sub" style={{ marginTop: 4 }}>{storagePercent}% used</span>
-            </div>
+        {/* Stats ó rendered from /usage API */}
+        <div className="stats-grid">
+
+          {/* Active Links */}
+          <div className="stat-card">
+            <span className="stat-label">Active Links</span>
+            <span className="stat-value">{activeLinks}</span>
+            <span className="stat-sub">of {maxSimultaneous} simultaneous</span>
           </div>
-        )}
+
+          {/* Upload Quota ó hidden for pro/admin since unlimited */}
+          {!isProOrAdmin ? (
+            <div className="stat-card">
+              <span className="stat-label">Uploads Today</span>
+              <span className="stat-value">{uploadsUsed}</span>
+              <span className="stat-sub">
+                {uploadsLimit !== null
+                  ? `${uploadsRemaining ?? 0} of ${uploadsLimit} remaining`
+                  : "Unlimited"}
+              </span>
+            </div>
+          ) : (
+            <div className="stat-card">
+              <span className="stat-label">Uploads Today</span>
+              <span className="stat-value" style={{ color: "var(--accent)" }}>8</span>
+              <span className="stat-sub">Unlimited (Pro)</span>
+            </div>
+          )}
+
+          {/* Simultaneous link usage bar */}
+          <div className="stat-card" style={{ gridColumn: "1 / -1" }}>
+            <span className="stat-label">
+              Simultaneous Links
+              {!isProOrAdmin && (
+                <span style={{ marginLeft: 8, fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 400 }}>
+                  ó Free plan: 1 at a time
+                </span>
+              )}
+            </span>
+            <div className="progress-bar-track" style={{ marginTop: 8 }}>
+              <div className="progress-bar-fill" style={{ width: `${storagePercent}%` }} />
+            </div>
+            <span className="stat-sub" style={{ marginTop: 4 }}>
+              {activeLinks} / {maxSimultaneous} active
+            </span>
+          </div>
+
+        </div>
 
         {/* Upload panel */}
-        <UploadPanel onUploaded={load} />
+        <UploadPanel
+          onUploaded={load}
+          maxFileSizeBytes={maxFileSizeBytes}
+          canUpload={!usage || activeLinks < maxSimultaneous}
+          canUploadReason={
+            usage && activeLinks >= maxSimultaneous
+              ? `You have ${activeLinks} active link${activeLinks !== 1 ? "s" : ""} (max ${maxSimultaneous} simultaneous).${!isProOrAdmin ? " Upgrade to Pro for up to 3 simultaneous links." : ""}`
+              : undefined
+          }
+          isProOrAdmin={isProOrAdmin}
+        />
 
         {/* Transfer list */}
         <div className="section-title">
