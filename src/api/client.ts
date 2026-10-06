@@ -15,7 +15,7 @@ import axios, {
 } from "axios";
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:8787";
+  "https://filedrop-backend.varunneo380.workers.dev";
 
 const BASE_URL = API_BASE_URL;
 

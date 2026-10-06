@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:8787",
+        target: "https://filedrop-backend.varunneo380.workers.dev",
         changeOrigin: true,
       },
     },
