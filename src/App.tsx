@@ -1,23 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/auth";
 import { authApi } from "./api";
-import Spinner from "./components/Spinner";
+import BrandLoader from "./components/BrandLoader";
 
-import LandingPage   from "./pages/LandingPage";
-import LoginPage     from "./pages/LoginPage";
-import RegisterPage  from "./pages/RegisterPage";
-import DashboardPage from "./pages/DashboardPage";
-import DownloadPage  from "./pages/DownloadPage";
+// Lazy-loaded page routes
+const LandingPage   = lazy(() => import("./pages/LandingPage"));
+const LoginPage     = lazy(() => import("./pages/LoginPage"));
+const RegisterPage  = lazy(() => import("./pages/RegisterPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const DownloadPage  = lazy(() => import("./pages/DownloadPage"));
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAuthStore();
-  if (!initialized) return (
-    <div className="loading-page">
-      <Spinner size={36} />
-      <p className="text-secondary">Loading…</p>
-    </div>
-  );
+  if (!initialized) {
+    return <BrandLoader fullScreen message="Verifying session…" />;
+  }
   return user ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
@@ -33,27 +31,27 @@ export default function App() {
   }, []);
 
   if (!initialized) {
-    return (
-      <div className="loading-page">
-        <Spinner size={36} />
-        <p className="text-secondary">Loading FileDrop…</p>
-      </div>
-    );
+    return <BrandLoader fullScreen message="Loading T Share…" />;
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/"          element={<LandingPage />} />
-        <Route path="/login"     element={<LoginPage />} />
-        <Route path="/s/:token"  element={<DownloadPage />} />
-        <Route path="/f/:token"  element={<DownloadPage />} />
-        <Route path="/dashboard" element={
-          <PrivateRoute><DashboardPage /></PrivateRoute>
-        } />
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+    <BrowserRouter
+      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+    >
+      <Suspense fallback={<BrandLoader fullScreen message="Loading…" />}>
+        <Routes>
+          <Route path="/"          element={<LandingPage />} />
+          <Route path="/login"     element={<LoginPage />} />
+          <Route path="/register"  element={<RegisterPage />} />
+          <Route path="/s/:token"  element={<DownloadPage />} />
+          <Route path="/f/:token"  element={<DownloadPage />} />
+          <Route path="/dashboard" element={
+            <PrivateRoute><DashboardPage /></PrivateRoute>
+          } />
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

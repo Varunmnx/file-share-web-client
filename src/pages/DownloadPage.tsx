@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { recipientApi } from "../api";
 import type { TransferInfo } from "../api/recipient";
 import Navbar from "../components/Navbar";
-import Spinner from "../components/Spinner";
+import Spinner, { BrandLoader } from "../components/Spinner";
 import Alert from "../components/Alert";
 
 function formatBytes(bytes?: number): string {
@@ -144,8 +144,7 @@ export default function DownloadPage() {
       <main className="page-wrapper" style={{ maxWidth: 640, margin: "40px auto 80px", padding: "0 20px" }}>
         {loading ? (
           <div className="card" style={{ textAlign: "center", padding: "64px 24px" }}>
-            <Spinner size={36} />
-            <p className="text-secondary" style={{ marginTop: 16 }}>Loading secure transfer…</p>
+            <BrandLoader size={44} message="Loading secure transfer…" />
           </div>
         ) : errorType ? (
           <div className="card" style={{ textAlign: "center", padding: "48px 24px" }}>

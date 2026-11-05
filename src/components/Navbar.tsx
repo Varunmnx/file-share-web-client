@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/auth";
 import { billingApi } from "../api";
+import BrandLogo from "./BrandLogo";
+import Spinner from "./Spinner";
 
 export default function Navbar() {
   const { user, logout } = useAuthStore();
@@ -29,8 +31,10 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <Link to="/" className="navbar-brand">
-        <span className="brand-icon">📤</span>
-        FileDrop
+        <span className="brand-icon">
+          <BrandLogo size={32} />
+        </span>
+        T Share
       </Link>
 
       <div className="navbar-links">
@@ -53,7 +57,13 @@ export default function Navbar() {
                 className="btn btn-primary btn-sm"
                 style={{ marginRight: 8, background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
               >
-                {upgrading ? "Loading..." : "⚡ Upgrade to Pro"}
+                {upgrading ? (
+                  <>
+                    <Spinner size={14} /> Loading…
+                  </>
+                ) : (
+                  "⚡ Upgrade to Pro"
+                )}
               </button>
             )}
 
@@ -64,7 +74,7 @@ export default function Navbar() {
         ) : (
           <>
             <Link to="/login" className="btn btn-ghost btn-sm">Sign in</Link>
-            <Link to="/register" className="btn btn-primary btn-sm">Get started</Link>
+            <Link to="/login" className="btn btn-primary btn-sm">Get started</Link>
           </>
         )}
       </div>
