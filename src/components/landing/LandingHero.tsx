@@ -36,21 +36,21 @@ export default function LandingHero() {
         <source src="/hero.mp4" type="video/mp4" />
       </video>
 
-      <div className="lp-dots" aria-hidden="true" />
-      {SPARKLES.map((sp, idx) => (
+      {/* <div className="lp-dots" aria-hidden="true" /> */}
+      {/* {SPARKLES.map((sp, idx) => (
         <i
           key={idx}
           className="lp-sp"
           style={{ left: sp.left, top: sp.top, animationDelay: sp.animationDelay }}
           aria-hidden="true"
         />
-      ))}
+      ))} */}
 
       <div className="lp-hero-copy">
-        <div className="lp-chip">
+        {/* <div className="lp-chip">
           <i className="lp-chip-dot" />
           End-to-end encrypted by default
-        </div>
+        </div> */}
 
         <h1 className="lp-h1">
           Share more files,<br />

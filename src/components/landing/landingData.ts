@@ -22,22 +22,22 @@ export const FEATURE_CARDS_DATA: FeatureCardData[] = [
     title: "Send files, share with anyone!",
     sub: "No account needed to receive. Just open the link.",
     flip: false,
-    imgSrc: "/castle.png",
-    imgAlt: "Castle illustration",
+    imgSrc: "/card1.jpg",
+    imgAlt: "Card 1 illustration",
   },
   {
     title: "Share files. Fast, easy access.",
     sub: "Large files upload in the background while you keep working.",
     flip: true,
-    imgSrc: "/castle.png",
-    imgAlt: "Castle illustration",
+    imgSrc: "/card2.jpg",
+    imgAlt: "Card 2 illustration",
   },
   {
     title: "Share files, quick and secure.",
     sub: "End-to-end encryption on every transfer, by default.",
     flip: false,
-    imgSrc: "/castle.png",
-    imgAlt: "Castle illustration",
+    imgSrc: "/card3.jpg",
+    imgAlt: "Card 3 illustration",
   },
 ];
 

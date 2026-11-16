@@ -2,6 +2,7 @@ export { default as LandingNav } from "./LandingNav";
 export { default as LandingHero } from "./LandingHero";
 export { default as LandingStats } from "./LandingStats";
 export { default as LandingCards } from "./LandingCards";
+export { default as LandingGlobe } from "./LandingGlobe";
 export { default as LandingFeatures } from "./LandingFeatures";
 export { default as LandingSteps } from "./LandingSteps";
 export { default as LandingFaq } from "./LandingFaq";

@@ -8,6 +8,7 @@ import {
 
 // Lazy-loaded below-the-fold landing sections
 const LandingCards    = lazy(() => import("../components/landing/LandingCards"));
+const LandingGlobe    = lazy(() => import("../components/landing/LandingGlobe"));
 const LandingFeatures = lazy(() => import("../components/landing/LandingFeatures"));
 const LandingSteps    = lazy(() => import("../components/landing/LandingSteps"));
 const LandingFaq      = lazy(() => import("../components/landing/LandingFaq"));
@@ -26,14 +27,15 @@ export default function LandingPage() {
         <LandingHero />
 
         {/* Dynamic statistics and infinite marquee */}
-        <LandingStats />
+        {/* <LandingStats /> */}
 
         {/* Feature cards, feature spotlights, workflow steps, FAQ, and final CTA */}
         <section id="how" className="lp-section">
           <Suspense fallback={<div style={{ minHeight: 200 }} />}>
             <LandingCards />
-            <LandingFeatures />
-            <LandingSteps />
+            <LandingGlobe />
+            {/* <LandingFeatures /> */}
+            {/* <LandingSteps /> */}
             <LandingFaq />
             <LandingCta />
           </Suspense>
