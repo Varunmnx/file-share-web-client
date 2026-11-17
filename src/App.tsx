@@ -25,10 +25,9 @@ export default function App() {
   useEffect(() => {
     // Handle Google OAuth callback tokens that land on the root URL
     const handled = authApi.handleOAuthCallback();
-    // Always fetch me (no-op if not authenticated)
     if (!handled) fetchMe();
     else fetchMe();
-  }, []);
+  }, [fetchMe]);
 
   if (!initialized) {
     return <BrandLoader fullScreen message="Loading T Share…" />;
@@ -45,9 +44,14 @@ export default function App() {
           <Route path="/register"  element={<RegisterPage />} />
           <Route path="/s/:token"  element={<DownloadPage />} />
           <Route path="/f/:token"  element={<DownloadPage />} />
-          <Route path="/dashboard" element={
-            <PrivateRoute><DashboardPage /></PrivateRoute>
-          } />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <DashboardPage />
+              </PrivateRoute>
+            }
+          />
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
